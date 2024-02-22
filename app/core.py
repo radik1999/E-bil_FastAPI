@@ -1,29 +1,27 @@
-import secrets
 from datetime import datetime, timedelta
 
 from jose import jwt
 from passlib.context import CryptContext
 
-from app.constants import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
+from app.config import get_settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-SECRET_KEY = secrets.token_urlsafe(32)
-
-
 # todo think if need to change subject as id to email
-def create_access_token(
-    subject: int, expires_delta: timedelta = None
-) -> str:
+def create_access_token(subject: int, expires_delta: timedelta = None) -> str:
+    settings = get_settings()
+
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(
-            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+            minutes=settings.access_token_expire_minutes
         )
+
     to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
     return encoded_jwt
 
 

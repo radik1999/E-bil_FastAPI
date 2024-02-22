@@ -7,8 +7,7 @@ from pydantic import ValidationError
 from sqlmodel import Session
 from fastapi import status
 
-from app.constants import ALGORITHM
-from app.core import SECRET_KEY
+from app.config import get_settings
 from app.db.engine import engine
 from app.models import User, TokenPayload
 
@@ -25,9 +24,11 @@ TokenDep = Annotated[str, Depends(oauth2_scheme)]
 
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
+    settings = get_settings()
+
     try:
         payload = jwt.decode(
-            token, SECRET_KEY, algorithms=[ALGORITHM]
+            token, settings.secret_key, algorithms=[settings.algorithm]
         )
         token_data = TokenPayload(**payload)
     except (jwt.JWTError, ValidationError):
