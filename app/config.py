@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int
     secret_key: str = secrets.token_urlsafe(32)
 
+    postgres_server: str
     postgres_user: str
     postgres_password: str
     postgres_db: str

@@ -8,6 +8,8 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, table=True):
+    __tablename__ = "users"
+
     id: int | None = Field(default=None, primary_key=True)
     hashed_password: str
 
