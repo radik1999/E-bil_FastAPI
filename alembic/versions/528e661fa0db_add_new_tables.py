@@ -24,7 +24,7 @@ def upgrade() -> None:
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
                     sa.Column('price', sa.Float(), nullable=False),
-                    sa.Column('amount', sa.Float(), nullable=False),
+                    sa.Column('quantity', sa.Float(), nullable=False),
                     sa.PrimaryKeyConstraint('id')
                     )
 

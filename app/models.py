@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from pydantic import EmailStr
-from sqlmodel import SQLModel, Field, AutoString, Relationship, JSON, Column
+from pydantic import EmailStr, computed_field, model_serializer
+from sqlmodel import SQLModel, Field, AutoString, Relationship, JSON
 
 from app.constants import PymentType
 
@@ -44,20 +44,39 @@ class BillsProducts(SQLModel, table=True):
     product_id: int | None = Field(default=None, foreign_key="products.id", primary_key=True)
 
 
-class Product(SQLModel, table=True):
+class ProductCreate(SQLModel):
+    name: str
+    price: float
+    quantity: float
+
+
+class Product(ProductCreate, table=True):
     __tablename__ = "products"
 
     id: int | None = Field(default=None, primary_key=True)
-    name: str
-    price: float
-    amount: float
-
     bills: list["Bill"] = Relationship(back_populates="products", link_model=BillsProducts)
 
 
 class Payment(SQLModel):
     type: PymentType
     amount: float
+
+    @model_serializer
+    def model_ser(self) -> dict:
+        return {"type": self.type.value, "amount": self.amount}
+
+
+class BillCreate(SQLModel):
+    products: list[ProductCreate]
+    payment: Payment
+
+    @computed_field
+    def total(self) -> float:
+        return sum([p.price * p.quantity for p in self.products])
+
+    @computed_field
+    def rest(self) -> float:
+        return self.payment.amount - self.total
 
 
 class Bill(SQLModel, table=True):
@@ -70,15 +89,7 @@ class Bill(SQLModel, table=True):
 
     products: list[Product] = Relationship(back_populates="bills", link_model=BillsProducts)
 
-    payment_json: dict = Field(sa_column=Column("payment", JSON))
-
-    @property
-    def payment(self):
-        return Payment.model_validate(self.payment_json)
-
-    @payment.setter
-    def payment(self, value):
-        self.payment_json = value.json()
+    payment: dict = Field(sa_type=JSON)
 
     owner_id: int = Field(foreign_key="users.id")
     owner: User = Relationship(back_populates="bills")
